@@ -1,0 +1,204 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/09/Square/SquareGame.jack
+
+/**
+ * Implements the Square Dance game.
+ * This simple game allows the user to move a black square around
+ * the screen, and change the square's size during the movement.
+ * When the game starts, a square of 30 by 30 pixels is shown at the
+ * top-left corner of the screen. The user controls the square as follows.
+ * The 4 arrow keys are used to move the square up, down, left, and right.
+ * The 'z' and 'x' keys are used, respectively, to decrement and increment
+ * the square's size. The 'q' key is used to quit the game.
+ */
+
+
+class GhostGame {
+   field GameObject objectManager;
+   field int score;
+   /*iteration var*/
+   field int i;
+   field int counter;
+   /*house var*/
+   field int x1;
+   field int y1;
+   field int x2;
+   field int y2;
+   /*random array*/
+   field Array rand1;
+   field Array rand2;
+   field int w1;
+   field int w2;
+   field int w3;
+   field int w4;
+   static String text;
+   static String lossMsg;
+   static String startMsg1;
+   static String startMsg2;
+   static String startMsg3;
+   static String startMsg4;
+   static String startMsg5;
+
+
+   field boolean exit;
+
+
+   /** Constructs a new Square Game. */
+   constructor GhostGame new() {
+      // Creates a 30 by 30 pixels square and positions it at the top-left
+      // of the screen.
+      let text = "score:";
+      let lossMsg = "oh no! you lost";
+      let startMsg1 = "Welcome to spookiest nand2tetris game ever! ";
+      let startMsg2 = "The keys for the game are W-top left,E-top right,";
+      let startMsg3 ="S-bottom left,D-bottom right";
+      let startMsg4= "You need detect the boy by pressing the respecting window key.";
+      let startMsg5= "Beware- do not touch the ghosts!";
+      let objectManager = GameObject.new();
+      let exit = false;
+      let score = 3;
+      let x1=100; let y1=10; let x2=400;let y2=255;
+      let w1=0;let w2=0;let w3=0;let w4=0;
+      let rand1=Array.new(50);let rand2=Array.new(50);
+      do fillArray(rand1,1234);do fillArray(rand2,4321);
+      do start();
+      do drawGame();
+      return this;
+   }
+
+   method void fillArray(Array arr, int seed)
+   {
+    var int a, b, c;
+    var Array a;
+    let i=0;
+    let a = seed; let b = 1; let c = 0;
+    while ( i < 50 )
+    {
+        let c = (c * a + b)+b;
+        let c = module4(c);
+        let arr[i]=c;
+        let a = a + 5;
+        let b = b + 1;
+        let i = i+1;
+    }
+    return;
+   }
+
+   method int module4(int num)
+   {
+    let num = (num - (4*(num/4)))+1;
+    return num;
+   }
+
+
+   method void drawGame()
+   {
+    do Screen.setColor(true);
+    do Screen.drawRectangle(x1, y1, x2, y2);
+    do objectManager.drawDoor(12,13);
+    do objectManager.drawWindow(3,9);
+    do objectManager.drawWindow(3,18);
+    do objectManager.drawWindow(10,9);
+    do objectManager.drawWindow(10,18);
+    do objectManager.drawTree(12,27);
+    return;
+   }
+
+   /** Disposes this game. */
+   method void dispose() {
+      do objectManager.dispose();
+      do Memory.deAlloc(rand1);
+      do Memory.deAlloc(rand2);
+      do Memory.deAlloc(this);
+      return;
+   }
+
+   method void moveGameObject()
+   {
+        if (~exit)
+        {
+            do objectManager.erase();
+            let counter = counter + 1;
+            if(counter > 50){let counter = 0;}
+            let w1=0;let w2=0;let w3=0;let w4=0;
+            if (rand2[counter]=1){let w1=-1; do objectManager.drawGhostHelper(1);}
+            if (rand2[counter]=2){let w2=-1; do objectManager.drawGhostHelper(2);}
+            if (rand2[counter]=3){let w3=-1; do objectManager.drawGhostHelper(3);}
+            if (rand2[counter]=4){let w4=-1; do objectManager.drawGhostHelper(4);}
+            if (rand1[counter]=1){let w1=1; do objectManager.drawBoyHelper(1);}
+            if (rand1[counter]=2){let w2=1;do objectManager.drawBoyHelper(2);}
+            if (rand1[counter]=3){let w3=1;do objectManager.drawBoyHelper(3);}
+            if (rand1[counter]=4){let w4=1;do objectManager.drawBoyHelper(4);}
+        }
+        return;
+   }
+
+
+    method void start()
+    {
+        do Output.moveCursor(0,3);
+        do Output.printString(startMsg1);
+        do Output.moveCursor(3,3);
+        do Output.printString(startMsg2);
+        do Output.moveCursor(6,3);
+        do Output.printString(startMsg3);
+        do Output.moveCursor(9,3);
+        do Output.printString(startMsg4);
+        do Output.moveCursor(12,3);
+        do Output.printString(startMsg5);
+        do objectManager.drawTree(12,27);
+        do Sys.wait(10000);
+        do Screen.clearScreen();
+        return;
+    }
+
+   /** Runs the game: handles the user's inputs and moves the square accordingly */
+   method void run() {
+      var char key;  // the key currently pressed by the user
+      while (~exit)
+      {
+          do Output.moveCursor(0,0);
+          do Output.printString(text);
+          do Output.printInt(score);
+          do moveGameObject();
+          let i = 0;
+          while (i<30000){
+              let key = Keyboard.keyPressed();
+              if (key = 81){let exit = true; let i = 30000;} //key=Q
+              if (key=87){let score = score+w1; let i = 30000;}//key=W
+              if (key=69){let score = score+w2; let i = 30000;}//key=E
+              if (key=83){let score = score+w3; let i = 30000;}//key=S
+              if (key=68){let score = score+w4; let i = 30000;}//key=D
+              let i = i + 1;
+              }
+          do Output.moveCursor(0,0);
+          do Output.printString(text);
+          do Output.printInt(score);
+          if (score>0)
+          {
+              do objectManager.erase();
+              do Sys.wait(700);
+          }
+          if (score<1)//end of game
+          {
+                let exit = true;
+          }
+      }
+      do gameEnd();
+     return;
+   }
+
+   method void gameEnd()
+   {
+        do Screen.clearScreen();
+        do Output.moveCursor(10,25);
+        let score = 0;
+        do Output.printString(lossMsg);
+        return;
+   }
+}
+
+
+

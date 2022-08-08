@@ -1,0 +1,33 @@
+// This file is part of nand2tetris, as taught in The Hebrew University,
+// and was written by Aviv Yaish, and is published under the Creative 
+// Common Attribution-NonCommercial-ShareAlike 3.0 Unported License 
+// https://creativecommons.org/licenses/by-nc-sa/3.0/
+
+// The inputs of the extended ALU are instruction[9], x[16], y[16].
+// The output is defined as follows:
+// If instruction[8] == 1, 1, the output is the same as the regular ALU,
+// where instruction[5]=zx, instruction[4]=nx, ..., instruction[0]=no.
+// If instruction[8] == 0, the output will be a shift of the input:
+// - If instruction[4] == 0, the input "y" will be shifted, otherwise "x", 
+// - If instruction[5] == 0, the shift will be a right-shift, otherwise left.
+
+CHIP ExtendAlu {
+     IN x[16], y[16], instruction[9];
+     OUT out[16], zr, ng;
+     
+     PARTS:
+     //ShiftRightx
+     And16(a[15]=x[15],a[0..14]=x[1..15], b=true, out=ShiftRightX);
+     //ShiftLeftx
+     And16(a[0]=false,a[1..15]=true, b[0]=true,b[1..15]=x[0..14],out=ShiftLeftx);
+     //ShiftRighty
+     And16(a[15]=y[15],a[0..14]=y[1..15], b=true, out=ShiftRighty);
+     //ShiftLefty
+     And16(a[0]=false,a[1..15]=true, b[0]=true,b[1..15]=y[0..14],out=ShiftLefty);
+     //00->shift y right, 10->shift y left, 01->shift x right, 11->shift x left
+     Mux4Way16(a=ShiftRighty, b=ShiftRightX, c=ShiftLefty, d=ShiftLeftx, sel=instruction[4..5], out=shifted);
+     ALU(x=x, y=y, zx=instruction[5], nx=instruction[4], zy=instruction[3], ny=instruction[2], f=instruction[1], no=instruction[0], out=modifed, zr=null1, ng=null2);
+     Mux16(a=shifted, b=modifed, sel=instruction[8], out=out1);
+     ALU(x=true, y=out1, zx=false, nx=false, zy=false, ny=false, f=false, no=false, out=out, zr=zr, ng=ng);
+
+}
